@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Report road damage · RoadWatch AI</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%233768e5'/%3E%3Ctext x='16' y='21' font-size='13' font-family='Arial' font-weight='700' fill='white' text-anchor='middle'%3ERW%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="/vendor/leaflet/leaflet.css">
+<link rel="stylesheet" href="/styles.css">
+<script defer src="/vendor/leaflet/leaflet.js"></script>
+<script defer src="/common.js"></script>
+<script defer src="/report.js"></script>
+</head>
+<body class="citizen">
+<header class="cz-head">
+  <div class="brand"><div class="logo">RW</div><div><b>RoadWatch <em>AI</em></b><small>Chennai road damage reporting</small></div></div>
+  <a href="/" class="cz-staff">Staff sign-in</a>
+</header>
+<main class="cz-main">
+  <div class="cz-intro">
+    <h1>Spotted a pothole?</h1>
+    <p>Send a photo and the location. Our AI checks the photo, and the city's road team reviews every report. You'll get a reference number to track the repair.</p>
+  </div>
+  <div class="cz-tabs" role="tablist">
+    <button class="active" data-tab="reportTab" role="tab">Report damage</button>
+    <button data-tab="trackTab" role="tab">Track a report</button>
+  </div>
+
+  <section id="reportTab" class="cz-card">
+    <form id="reportForm" novalidate>
+      <div class="cz-step"><span>1</span><div><b>Photo of the damage</b><p>Stand back far enough to show the whole damaged area.</p></div></div>
+      <label class="cz-photo" id="photoDrop">
+        <input type="file" id="photo" name="photo" accept="image/jpeg,image/png,image/webp" capture="environment">
+        <div id="photoEmpty"><b>📷 Take or choose a photo</b><small>JPEG, PNG or WebP, up to 8 MB</small></div>
+        <img id="photoPreview" alt="Selected photo" class="hidden">
+      </label>
+
+      <div class="cz-step"><span>2</span><div><b>Where is it?</b><p>Tap the map to drop a pin, or use your current location. Drag the pin to adjust.</p></div></div>
+      <div id="pickMap" class="pickmap cz-map"></div>
+      <div class="pickinfo"><span id="locInfo">No location selected yet.</span><button type="button" class="secondary small" id="locateBtn">⌖ Use my location</button></div>
+
+      <div class="cz-step"><span>3</span><div><b>A few details</b><p>Optional, but helps the road team.</p></div></div>
+      <div class="cz-grid">
+        <label class="field">Type of damage<select id="dtype" name="type"></select></label>
+        <label class="field">Your name (optional)<input name="name" maxlength="100" autocomplete="name"></label>
+        <label class="field full">What did you see? (optional)<textarea name="description" maxlength="1000" placeholder="e.g. Deep pothole in the left lane near the bus stop"></textarea></label>
+        <label class="field full">Phone or email (optional — only staff can see it)<input name="contact" maxlength="100" autocomplete="email"></label>
+        <label class="field check full"><span><input type="checkbox" name="consent" value="yes" id="consent"> This photo and location are accurate to the best of my knowledge.</span></label>
+      </div>
+      <p id="formError" class="error" role="alert"></p>
+      <button class="primary full" id="submitBtn">Send report</button>
+    </form>
+
+    <div id="result" class="hidden">
+      <div class="cz-success"><div class="cz-tick">✓</div><div><small>REPORT RECEIVED</small><h2 id="resCode">RW-0000</h2><p>Save this reference number to track your report.</p></div></div>
+      <div id="resPhoto"></div>
+      <div class="details summary-details" id="resDetails"></div>
+      <p class="sectionnote nopad" id="resNote"></p>
+      <div class="cz-actions"><button class="secondary" id="trackThis">Track this report</button><button class="primary" id="another">Report another</button></div>
+    </div>
+  </section>
+
+  <section id="trackTab" class="cz-card hidden">
+    <form id="trackForm" class="cz-track"><input id="trackCode" placeholder="Reference number, e.g. RW-1502" autocomplete="off" required><button class="primary">Check status</button></form>
+    <p id="trackError" class="error"></p>
+    <div id="trackResult"></div>
+  </section>
+  <p class="cz-foot">Map data © OpenStreetMap contributors. Reports are reviewed by municipal staff; please don't use this form for emergencies.</p>
+</main>
+<div id="toast" role="status"></div>
+</body>
+</html>

@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>RoadWatch AI</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%233768e5'/%3E%3Ctext x='16' y='21' font-size='13' font-family='Arial' font-weight='700' fill='white' text-anchor='middle'%3ERW%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="/vendor/leaflet/leaflet.css">
+<link rel="stylesheet" href="/styles.css">
+<script defer src="/vendor/leaflet/leaflet.js"></script>
+<script defer src="/common.js"></script>
+<script defer src="/app.js"></script>
+</head>
+<body>
+<div id="boot" class="boot"><div class="logo">RW</div></div>
+
+<div id="login" class="login hidden">
+  <div class="hero">
+    <div class="logo">RW</div>
+    <small>CITY INFRASTRUCTURE INTELLIGENCE</small>
+    <h1>Safer roads.<br><em>Smarter response.</em></h1>
+    <p>One operational view for road damage, inspection coverage, and repair accountability across Chennai.</p>
+    <div class="stats"><b>06 <small>Workspaces</small></b><b>04 <small>Report sources</small></b><b>AI <small>Photo detection</small></b></div>
+    <a class="herolink" href="/report">Citizen? Report a pothole →</a>
+  </div>
+  <form id="loginForm" class="loginform">
+    <div class="brand"><div class="logo">RW</div><div><b>RoadWatch AI</b><small>Municipal operations platform</small></div></div>
+    <h2>Welcome back</h2>
+    <p>Sign in to your workspace</p>
+    <label>Email<input id="email" type="email" autocomplete="username" value="admin@roadwatch.demo" required></label>
+    <label>Password<input id="password" type="password" autocomplete="current-password" value="demo123" required></label>
+    <p id="loginError" class="error" role="alert"></p>
+    <button class="primary full" id="loginBtn">Sign in →</button>
+    <div class="demo"><b>Demo accounts · password: demo123</b><br>
+      <button type="button" class="demoacct" data-email="admin@roadwatch.demo">admin@roadwatch.demo</button> · Administrator<br>
+      <button type="button" class="demoacct" data-email="officer@roadwatch.demo">officer@roadwatch.demo</button> · Municipal Officer<br>
+      <button type="button" class="demoacct" data-email="team@roadwatch.demo">team@roadwatch.demo</button> · Repair Team<br>
+      <button type="button" class="demoacct" data-email="auditor@roadwatch.demo">auditor@roadwatch.demo</button> · Read-Only Auditor</div>
+    <small>Change these passwords before showing the app outside a demo.</small>
+  </form>
+</div>
+
+<div id="app" class="app hidden">
+  <aside class="sidebar">
+    <div class="brand"><div class="logo">RW</div><div><b>RoadWatch <em>AI</em></b><small>CHENNAI OPERATIONS</small></div></div>
+    <small class="navtitle">WORKSPACE</small>
+    <nav>
+      <button class="active" data-page="dashboard">▦ Dashboard</button>
+      <button data-page="cases">◈ Cases <span id="navOpen">–</span></button>
+      <button data-page="vehicles">▤ Vehicles</button>
+      <button data-page="analytics">▥ Analytics</button>
+      <button data-page="teams">⌘ Departments & Teams</button>
+      <button data-page="users">♙ User Management</button>
+    </nav>
+    <div class="sidebottom">
+      <div class="live"><i id="aiDot"></i><div><b id="aiLabel">Checking AI…</b><small id="aiSub">Detector status</small></div></div>
+      <a class="sidelink" href="/report" target="_blank" rel="noopener">↗ Citizen report page</a>
+      <button id="notesBtn">? About this system</button>
+    </div>
+  </aside>
+  <main>
+    <header>
+      <div>RoadWatch AI <span>/</span> <b id="crumb">Dashboard</b></div>
+      <div class="right">
+        <span class="demoTag hidden" id="demoTag">● INCLUDES DEMO DATA</span>
+        <button id="notifications" aria-label="Notifications">🔔<i id="notifyCount" class="badge hidden"></i></button>
+        <div class="user">
+          <div class="avatar" id="avatar">–</div>
+          <div><b id="userName">–</b><small id="role">–</small></div>
+          <button id="menuBtn" aria-label="Account menu">⌄</button>
+          <div id="menu" class="menu hidden"><button id="profileBtn">My profile</button><button id="passwordBtn">Change password</button><button id="logout">Sign out</button></div>
+        </div>
+      </div>
+    </header>
+    <div class="content">
+
+<section id="dashboard" class="page">
+  <div class="heading"><div><small id="todayLabel">CHENNAI</small><h1>Road intelligence overview</h1><p>Monitor road conditions, prioritise risks, and track repairs across the city.</p></div><button class="primary" data-role-create id="newCase">＋ New case</button></div>
+  <div class="metrics">
+    <article class="clickable" data-jump='{"page":"cases"}'><small>Total valid cases</small><strong id="mValid">–</strong><p id="mValidNote">&nbsp;</p></article>
+    <article class="clickable" data-jump='{"page":"cases","severity":"Critical","open":"1"}'><small>Critical damage (open)</small><strong class="red" id="mCritical">–</strong><p id="mCriticalNote">&nbsp;</p></article>
+    <article class="clickable" data-jump='{"page":"cases","overdue":"1","sort":"deadline"}'><small>Overdue repairs</small><strong class="orange" id="mOverdue">–</strong><p id="mOverdueNote">&nbsp;</p></article>
+    <article class="clickable" data-jump='{"page":"cases","status":"Resolved"}'><small>Verified resolved</small><strong class="green" id="mResolved">–</strong><p id="mResolvedNote">&nbsp;</p></article>
+  </div>
+  <div class="dashgrid">
+    <article class="panel mapPanel">
+      <div class="panelhead"><div><h3>Chennai road network</h3><p>Damage severity & observation coverage</p></div>
+        <div class="map-layer-controls"><label><input type="checkbox" id="vehiclesLayer"> Vehicle positions</label><label><input type="checkbox" id="repairsLayer"> Repair status</label></div></div>
+      <div class="legend"><span><i class="legend-dot critical-dot"></i> Critical</span><span><i class="legend-dot high-dot"></i> High</span><span><i class="legend-dot medium-dot"></i> Medium</span><span><i class="legend-dot low-dot"></i> Low</span><span>Road colour = highest active severity · zoom in for individual cases</span></div>
+      <div class="map-search-row"><input id="mapSearch" placeholder="Find case ID, road, area, vehicle or route…"><button id="mapSearchBtn" class="secondary">Find</button><button id="resetMap" class="secondary">Fit Chennai</button></div>
+      <div id="map"></div>
+      <div class="mapfoot"><span id="mapNote">Loading map…</span><span id="mapCount"></span></div>
+    </article>
+    <article class="panel priorityPanel"><div class="panelhead"><div><h3>Priority cases</h3><p>Open cases, worst severity and nearest deadline first</p></div><button class="link" data-go="cases">View all →</button></div><div id="priority" class="priority"></div></article>
+  </div>
+  <div class="dashgrid lower">
+    <article class="panel"><div class="panelhead"><div><h3>Damage vs verified repairs</h3><p id="trendNote">New cases and verified repairs</p></div><select id="period"><option value="30d">30 days</option><option value="7d">7 days</option><option value="12w">12 weeks</option></select></div><div id="chart" class="chart"></div><div class="legend"><span class="key blue">━ New damage cases</span><span class="key green">━ Verified repairs</span></div></article>
+    <article class="panel"><div class="panelhead"><div><h3>Observation coverage</h3><p>Average route coverage of active vehicles</p></div></div>
+      <div class="coverage"><strong id="covAll">–</strong><div class="ring" id="covRing">–</div></div>
+      <div class="covrow">Government buses <b id="covBus">–</b><div class="bar"><i id="covBusBar"></i></div></div>
+      <div class="covrow">Garbage vehicles <b id="covGc">–</b><div class="bar orangebar"><i id="covGcBar"></i></div></div>
+      <p class="note">Unobserved roads are not assumed to be damage-free.</p></article>
+  </div>
+</section>
+
+<section id="cases" class="page">
+  <div class="heading"><div><small>CASE OPERATIONS</small><h1>Damage cases</h1><p>Inspect evidence, review classifications, and track repair.</p></div>
+    <div class="headbtns"><button class="secondary" id="exportCsv" data-role-export>↓ Export CSV</button><button class="primary" data-role-create id="newCase2">＋ New case</button></div></div>
+  <div class="filters">
+    <input id="searchCase" placeholder="Search case ID, road, area, vehicle, reporter…">
+    <select id="sev"><option value="">All severities</option></select>
+    <select id="type"><option value="">All damage types</option></select>
+    <select id="status"><option value="">All statuses</option></select>
+    <select id="source"><option value="">All sources</option></select>
+    <select id="sort"><option value="newest">Newest first</option><option value="severity">Worst first</option><option value="deadline">Deadline</option><option value="oldest">Oldest first</option></select>
+    <label class="check"><input type="checkbox" id="fOpen"> Open only</label>
+    <label class="check"><input type="checkbox" id="fOverdue"> Overdue</label>
+    <label class="check hidden" id="fMineWrap"><input type="checkbox" id="fMine"> My team</label>
+    <label class="check"><input type="checkbox" id="fReal"> Hide demo data</label>
+  </div>
+  <article class="panel tablewrap">
+    <div class="tabletop"><span id="caseCount">Loading…</span><button class="link" id="clearFilters">Clear filters</button></div>
+    <table><thead><tr><th>CASE</th><th>DAMAGE</th><th>LOCATION</th><th>SOURCE</th><th>SEVERITY</th><th>STATUS</th><th>DEADLINE</th><th></th></tr></thead><tbody id="caseRows"></tbody></table>
+    <div class="pager"><button class="secondary" id="prevPage">← Previous</button><span id="pageInfo"></span><button class="secondary" id="nextPage">Next →</button></div>
+  </article>
+</section>
+
+<section id="vehicles" class="page">
+  <div class="heading"><div><small>OBSERVATION NETWORK</small><h1>Vehicle sources</h1><p>Inspection vehicles, their routes, and road coverage.</p></div><button class="primary" id="addVehicle" data-role-vehicles>＋ Add vehicle</button></div>
+  <div class="metrics three">
+    <article><small>Source vehicles</small><strong id="vTotal">–</strong><p id="vSplit">&nbsp;</p></article>
+    <article><small>Average route coverage</small><strong id="vCov">–</strong><p>Share of each route observed recently</p></article>
+    <article><small>Not seen in 3+ days</small><strong id="vStale">–</strong><p>Vehicles needing a data check</p></article>
+  </div>
+  <div class="filters"><input id="searchVehicle" placeholder="Search vehicle, route, operator, area…"><select id="sourceFilter"><option value="">All sources</option><option>Government bus</option><option>Garbage collection</option></select></div>
+  <div id="vehicleCards" class="cards"></div>
+</section>
+
+<section id="analytics" class="page">
+  <div class="heading"><div><small>PERFORMANCE & TRENDS</small><h1>Analytics</h1><p>Damage patterns, repair delivery, and inspection coverage.</p></div>
+    <div class="headbtns" data-role-export><button class="secondary" id="downloadCsv">↓ Cases CSV</button><button class="primary" id="downloadPdf">↓ PDF report</button></div></div>
+  <div class="metrics">
+    <article><small>Repeat damage flags</small><strong id="aRepeat">–</strong><p>Same damage within 10 m of a resolved repair</p></article>
+    <article class="clickable" data-jump='{"page":"cases","status":"Awaiting Verification"}'><small>Awaiting verification</small><strong id="aAwaiting">–</strong><p>Repair evidence submitted</p></article>
+    <article><small>Repairs within deadline</small><strong id="aSla">–</strong><p id="aSlaNote">&nbsp;</p></article>
+    <article class="clickable" data-jump='{"page":"cases","type":"Utility road cut","open":"1"}'><small>Excavation reviews</small><strong id="aExc">–</strong><p>Road cuts with permit not confirmed</p></article>
+  </div>
+  <div class="dashgrid lower">
+    <article class="panel"><div class="panelhead"><div><h3>Damage & verified repairs</h3><p>Weekly, last 12 weeks</p></div></div><div id="chart2" class="chart"></div><div class="legend"><span class="key blue">━ New damage cases</span><span class="key green">━ Verified repairs</span></div></article>
+    <article class="panel"><div class="panelhead"><div><h3>Cases by damage type</h3><p>Valid cases (excludes rejected)</p></div></div><div id="typeBars" class="typebars"></div></article>
+  </div>
+  <article class="panel tablewrap"><div class="panelhead"><div><h3>Ward overview</h3><p>Interpret counts alongside observation coverage.</p></div></div>
+    <table><thead><tr><th>WARD / AREA</th><th>VALID CASES</th><th>CRITICAL (OPEN)</th><th>OVERDUE</th><th>RESOLVED</th><th>OBSERVED COVERAGE</th></tr></thead><tbody id="wards"></tbody></table></article>
+</section>
+
+<section id="teams" class="page">
+  <div class="heading"><div><small>RESPONSIBILITY & DELIVERY</small><h1>Departments & Teams</h1><p>Ownership, assignments, and repair workload.</p></div><button class="primary" id="addTeam" data-role-teams>＋ Add team</button></div>
+  <div class="metrics three">
+    <article><small>Departments</small><strong id="tDepts">–</strong><p>Own cases through the responsibility field</p></article>
+    <article><small>Repair teams</small><strong id="tTeams">–</strong><p>Receive case assignments</p></article>
+    <article class="clickable" data-jump='{"page":"cases","status":"Confirmed"}'><small>Awaiting assignment</small><strong id="tAwait">–</strong><p>Confirmed cases with no team</p></article>
+  </div>
+  <div id="teamCards" class="cards"></div>
+  <article class="panel"><div class="panelhead"><div><h3>Responsibility review queue</h3><p id="queueNote">Open cases with unknown responsibility or unconfirmed excavation permits</p></div></div><div id="responsibility"></div></article>
+</section>
+
+<section id="users" class="page">
+  <div class="heading"><div><small>ACCESS ADMINISTRATION</small><h1>User management</h1><p>Create users, assign roles and teams, and manage account status.</p></div><button class="primary" id="createUser">＋ Create new user</button></div>
+  <div class="filters"><input id="searchUser" placeholder="Search name, email, department…"><select id="roleFilter"><option value="">All roles</option></select></div>
+  <article class="panel tablewrap"><div class="tabletop" id="userCount">Users</div>
+    <table><thead><tr><th>USER</th><th>EMAIL</th><th>ROLE</th><th>DEPARTMENT / TEAM</th><th>STATUS</th><th>LAST ACTIVE</th><th>ACTIONS</th></tr></thead><tbody id="userRows"></tbody></table></article>
+  <article class="panel"><div class="panelhead"><div><h3>System</h3><p>AI detector, road geometry and demo data</p></div><button class="secondary" id="refreshSystem">Refresh</button></div><div id="systemPanel" class="syspanel"></div></article>
+</section>
+
+    </div>
+  </main>
+</div>
+
+<div id="drawerBackdrop" class="backdrop hidden"><aside class="drawer" role="dialog" aria-modal="true"><div class="drawerhead"><div><small id="drawerId">CASE</small><h2 id="drawerTitle">Damage inspection</h2></div><button id="closeDrawer" aria-label="Close">×</button></div><div id="drawerBody" class="drawerbody"></div></aside></div>
+<div id="modalBackdrop" class="modalback hidden"><form id="modal" class="modal" novalidate><div class="modalhead"><div><small id="modalEyebrow">ROADWATCH AI</small><h2 id="modalTitle">Create record</h2></div><button type="button" id="closeModal" aria-label="Close">×</button></div><div id="fields" class="fields"></div><p id="modalError" class="error modalerror" role="alert"></p><div class="modalactions"><button type="button" class="secondary" id="cancel">Cancel</button><button class="primary" id="modalSave">Save</button></div></form></div>
+<div id="lightbox" class="lightbox hidden"><button id="closeLightbox" aria-label="Close">×</button><div id="lightboxBody"></div></div>
+<div id="toast" role="status"></div>
+<div id="notifyPanel" class="notify hidden"><div class="panelhead"><h3>Notifications</h3><button id="closeNotify" aria-label="Close">×</button></div><div id="notifyList"></div></div>
+</body>
+</html>

@@ -1,0 +1,7 @@
+﻿node_modules/
+detector/.venv/
+detector/models/
+detector/__pycache__/
+data/
+.env
+*.log
